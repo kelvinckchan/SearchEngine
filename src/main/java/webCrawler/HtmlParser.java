@@ -19,20 +19,34 @@ import org.slf4j.LoggerFactory;
 public class HtmlParser implements Runnable {
 
 	private URL ParsingURL;
-
-	public HtmlParser(URL ParsingURL) {
-		this.ParsingURL = ParsingURL;
-	}
+	// private URLQueue URLQueue;
+	private PriorityQueue<String> ProcessedURL = URLQueue.getProcessedURL();
+	private PriorityQueue<String> UnprocessedURL = URLQueue.getUnprocessedURL();;
 
 	private final org.slf4j.Logger logger = LoggerFactory.getLogger(HtmlParser.class);
 
 	public static void main(String[] args) {
-		try {
-			new Thread(new HtmlParser(new URL("http://www.hkbu.edu.hk/tch/main/index.jsp"))).start();
 
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
+	}
+
+	public HtmlParser(URL ParsingURL) {
+		this.ParsingURL = ParsingURL;
+		addToProcessedURL(this.ParsingURL.toString());
+	}
+
+	public HtmlParser(URL ParsingURL, URLQueue URLQueue) {
+		this.ParsingURL = ParsingURL;
+		// this.URLQueue = URLQueue;
+
+	}
+
+	public void addToProcessedURL(String url) {
+		URLQueue.PushProcessedURL(url);
+	}
+
+	public void addToUnProcessedURL(String url) {
+		if (!URLQueue.ProcessedURLisContain(url))
+			URLQueue.PushUnProcessedURL(url);
 	}
 
 	@Override
@@ -42,14 +56,14 @@ public class HtmlParser implements Runnable {
 
 	public void Parser(URL url) {
 		try {
-			Document doc = Jsoup.parse(url, 5000);
-//			System.out.println(doc);
+			Document doc = Jsoup.parse(url, 50000);
+			// System.out.println(doc);
 
 			// Get title
 			Elements WebTitles = doc.select("title");
 			for (Element t : WebTitles) {
 				String TitleText = t.text();
-				System.err.println(TitleText);
+				// System.err.println(TitleText);
 			}
 
 			// Get words
@@ -63,33 +77,36 @@ public class HtmlParser implements Runnable {
 				for (String s : line.text().split("[ \\t\\n\\x0B\\f\\r\\u00a0]")) {
 					if (!s.trim().replaceAll("[\\t\\n\\x0B\\f\\r\\d|\\|]", "").equals("")) {
 
-						if (containsHanScript(s)) {
-							Character lastChar = null;
-							List<Character> notChinese = new ArrayList<Character>();
-							char[] charArray = s.toCharArray();
-							for (int i = 0; i < charArray.length; i++) {
-								if (!isChineseChar(charArray[i])) {
-									if (lastChar != null && isChineseChar(lastChar)) {
-										notChinese = new ArrayList<Character>();
-									}
-									notChinese.add(charArray[i]);
-								} else {
-									System.out.println("[" + atomicInteger.incrementAndGet() + "]: " + charArray[i]);
-								}
-								// 大@ins
-								// 大@ins大
-								if (isChineseChar(charArray[i]) && lastChar != null && !isChineseChar(lastChar)
-										|| !isChineseChar(charArray[i]) && i == charArray.length - 1) {
-									System.err.println("[" + atomicInteger.incrementAndGet() + "]: " + notChinese
-											.stream().map(e -> e.toString()).reduce((acc, e) -> acc + e).get());
-								}
-								lastChar = charArray[i];
-							}
-
-						} else {
-							System.err.println(
-									"[" + atomicInteger.incrementAndGet() + "]: " + s + " C?: " + containsHanScript(s));
-						}
+						// if (containsHanScript(s)) {
+						// Character lastChar = null;
+						// List<Character> notChinese = new ArrayList<Character>();
+						// char[] charArray = s.toCharArray();
+						// for (int i = 0; i < charArray.length; i++) {
+						// if (!isChineseChar(charArray[i])) {
+						// if (lastChar != null && isChineseChar(lastChar)) {
+						// notChinese = new ArrayList<Character>();
+						// }
+						// notChinese.add(charArray[i]);
+						// } else {
+						// System.out.println("[" + atomicInteger.incrementAndGet() + "]: " +
+						// charArray[i]);
+						// }
+						// // 大@ins
+						// // 大@ins大
+						// if (isChineseChar(charArray[i]) && lastChar != null &&
+						// !isChineseChar(lastChar)
+						// || !isChineseChar(charArray[i]) && i == charArray.length - 1) {
+						// System.err.println("[" + atomicInteger.incrementAndGet() + "]: " + notChinese
+						// .stream().map(e -> e.toString()).reduce((acc, e) -> acc + e).get());
+						// }
+						// lastChar = charArray[i];
+						// }
+						//
+						// } else {
+						// System.err.println(
+						// "[" + atomicInteger.incrementAndGet() + "]: " + s + " C?: " +
+						// containsHanScript(s));
+						// }
 
 					}
 				}
@@ -100,25 +117,19 @@ public class HtmlParser implements Runnable {
 			Links.stream().filter(l -> {
 				return !l.absUrl("href").isEmpty();
 			}).forEach(link -> {
+				addToUnProcessedURL(link.absUrl("href"));
 				// System.err.println(link.absUrl("href"));
 			});
-			logger.info("[Parsedurl]: " + url.toString());
+//			logger.info("[Parsedurl]: " + url.toString());
+
+			
+
+			System.err.println("["+ProcessedURL.size()+"] ProcessedURL: " + ProcessedURL);
+			System.err.println("["+UnprocessedURL.size()+"] UnprocessedURL: " + UnprocessedURL);
+
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-	}
-
-	PriorityQueue<URL> ProcessedURL = new PriorityQueue<URL>();
-	PriorityQueue<URL> UnprocessedURL = new PriorityQueue<URL>();
-
-	public void addToProcessedURL(URL url) {
-		ProcessedURL.add(url);
-
-	}
-
-	public void addToUnProcessedURL(URL url) {
-		if (!ProcessedURL.contains(url))
-			UnprocessedURL.add(url);
 	}
 
 	HashSet<UnicodeBlock> chineseUnicodeBlocks = new HashSet<UnicodeBlock>() {
