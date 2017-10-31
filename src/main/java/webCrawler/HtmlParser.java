@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jsoup.Jsoup;
+import org.jsoup.UnsupportedMimeTypeException;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -25,29 +26,29 @@ public class HtmlParser implements Runnable {
 	private PriorityQueue<String> ProcessedURL = URLQueue.getProcessedURL();
 	private PriorityQueue<String> UnprocessedURL = URLQueue.getUnprocessedURL();;
 
-	private final org.slf4j.Logger logger = LoggerFactory.getLogger(HtmlParser.class);
+	private final org.slf4j.Logger logger;
 
-	public static void main(String[] args) {
-
-	}
+	// public static void main(String[] args) {
+	//
+	// }
 
 	public HtmlParser(URL ParsingURL) {
 		this.ParsingURL = ParsingURL;
+		this.logger = LoggerFactory.getLogger(HtmlParser.class);
 		addToProcessedURL(this.ParsingURL.toString());
 	}
 
-	public HtmlParser(URL ParsingURL, URLQueue URLQueue) {
-		this.ParsingURL = ParsingURL;
-		// this.URLQueue = URLQueue;
-
-	}
+	// public HtmlParser(URL ParsingURL, URLQueue URLQueue) {
+	// this.ParsingURL = ParsingURL;
+	// // this.URLQueue = URLQueue;
+	// }
 
 	public void addToProcessedURL(String url) {
 		URLQueue.PushProcessedURL(url);
 	}
 
 	public void addToUnProcessedURL(String url) {
-		if (!URLQueue.ProcessedURLisContain(url))
+		if (!URLQueue.ProcessedURLisContain(url) && !URLQueue.UnprocessedURLisContain(url))
 			URLQueue.PushUnProcessedURL(url);
 	}
 
@@ -77,9 +78,8 @@ public class HtmlParser implements Runnable {
 				return !text.equals("");
 			}).collect(Collectors.toList());
 
-			
-			//separate keywords
-			
+			// separate keywords
+
 			Line.forEach(line -> {
 				// System.err.println(word.text());
 				for (String s : line.text().split("[ \\t\\n\\x0B\\f\\r\\u00a0]")) {
@@ -121,20 +121,29 @@ public class HtmlParser implements Runnable {
 			});
 
 			// Get URLs
-			Elements Links = doc.select("[href]");
+			Elements Links = doc.select("a");
+			// logger.info("[<a>]: " + Links);
 			Links.stream().filter(l -> {
 				return !l.absUrl("href").isEmpty();
 			}).forEach(link -> {
 				addToUnProcessedURL(link.absUrl("href"));
-				// System.err.println(link.absUrl("href"));
+				// logger.info("{}\t=>\t{}", link, link.absUrl("href"));
 			});
 			// logger.info("[Parsedurl]: " + url.toString());
 
-			System.err.println("[" + ProcessedURL.size() + "] ProcessedURL: " + ProcessedURL);
-			System.err.println("[" + UnprocessedURL.size() + "] UnprocessedURL: " + UnprocessedURL);
+			// System.err.println("[" + URLQueue.getProcessedURLSize() + "] ProcessedURL: "
+			// + URLQueue.getProcessedURL());
+			// System.err.println(
+			// "[" + URLQueue.getUnprocessedURLSize() + "] UnprocessedURL: " +
+			// URLQueue.getUnprocessedURL());
 
+		} catch (UnsupportedMimeTypeException ex) {
+			logger.debug(ex.getLocalizedMessage() + "\t{}", ParsingURL.toString());
+			System.out.println("Remove Errorn URL: " + ProcessedURL.remove(ParsingURL.toString()));
 		} catch (IOException e) {
 			e.printStackTrace();
+			logger.debug(e.getLocalizedMessage() + "\t{}", ParsingURL.toString());
+			System.out.println("Remove Errorn URL: " + ProcessedURL.remove(ParsingURL.toString()));
 		}
 	}
 
