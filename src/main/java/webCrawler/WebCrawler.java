@@ -32,7 +32,7 @@ public class WebCrawler {
 		try {
 			Thread ParserThread = null;
 			// if (URLQueue.getProcessedURLSize() < 1) {
-			while (ProcessedSite < 2) {
+			while (URLQueue.getProcessedURLSize() < 10) {
 				URLQueue.PushUnProcessedURL(initialURL);
 				System.out.println("=> ProcessedURLSize(): " + URLQueue.getProcessedURLSize());
 				if (URLQueue.getUnprocessedURLSize() > 0) {

@@ -9,6 +9,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -69,10 +71,16 @@ public class HtmlParser implements Runnable {
 			// Get words
 			Elements aTagWordsString = doc.select("a");
 			AtomicInteger atomicInteger = new AtomicInteger(0);
-			aTagWordsString.stream().filter(line -> {
+
+			List<Element> Line = aTagWordsString.stream().filter(line -> {
 				String text = line.text().replaceAll("[\\t\\n\\x0B\\f\\r\\d|\\|]", "");
 				return !text.equals("");
-			}).forEach(line -> {
+			}).collect(Collectors.toList());
+
+			
+			//separate keywords
+			
+			Line.forEach(line -> {
 				// System.err.println(word.text());
 				for (String s : line.text().split("[ \\t\\n\\x0B\\f\\r\\u00a0]")) {
 					if (!s.trim().replaceAll("[\\t\\n\\x0B\\f\\r\\d|\\|]", "").equals("")) {
@@ -120,12 +128,10 @@ public class HtmlParser implements Runnable {
 				addToUnProcessedURL(link.absUrl("href"));
 				// System.err.println(link.absUrl("href"));
 			});
-//			logger.info("[Parsedurl]: " + url.toString());
+			// logger.info("[Parsedurl]: " + url.toString());
 
-			
-
-			System.err.println("["+ProcessedURL.size()+"] ProcessedURL: " + ProcessedURL);
-			System.err.println("["+UnprocessedURL.size()+"] UnprocessedURL: " + UnprocessedURL);
+			System.err.println("[" + ProcessedURL.size() + "] ProcessedURL: " + ProcessedURL);
+			System.err.println("[" + UnprocessedURL.size() + "] UnprocessedURL: " + UnprocessedURL);
 
 		} catch (IOException e) {
 			e.printStackTrace();
