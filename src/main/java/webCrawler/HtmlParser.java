@@ -13,6 +13,7 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.jsoup.Jsoup;
+import org.jsoup.UnsupportedMimeTypeException;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
@@ -25,29 +26,29 @@ public class HtmlParser implements Runnable {
 	private PriorityQueue<String> ProcessedURL = URLQueue.getProcessedURL();
 	private PriorityQueue<String> UnprocessedURL = URLQueue.getUnprocessedURL();;
 
-	private final org.slf4j.Logger logger = LoggerFactory.getLogger(HtmlParser.class);
+	private final org.slf4j.Logger logger;
 
-	public static void main(String[] args) {
-
-	}
+	// public static void main(String[] args) {
+	//
+	// }
 
 	public HtmlParser(URL ParsingURL) {
 		this.ParsingURL = ParsingURL;
+		this.logger = LoggerFactory.getLogger(HtmlParser.class);
 		addToProcessedURL(this.ParsingURL.toString());
 	}
 
-	public HtmlParser(URL ParsingURL, URLQueue URLQueue) {
-		this.ParsingURL = ParsingURL;
-		// this.URLQueue = URLQueue;
-
-	}
+	// public HtmlParser(URL ParsingURL, URLQueue URLQueue) {
+	// this.ParsingURL = ParsingURL;
+	// // this.URLQueue = URLQueue;
+	// }
 
 	public void addToProcessedURL(String url) {
 		URLQueue.PushProcessedURL(url);
 	}
 
 	public void addToUnProcessedURL(String url) {
-		if (!URLQueue.ProcessedURLisContain(url))
+		if (!URLQueue.ProcessedURLisContain(url) && !URLQueue.UnprocessedURLisContain(url))
 			URLQueue.PushUnProcessedURL(url);
 	}
 
@@ -77,64 +78,74 @@ public class HtmlParser implements Runnable {
 				return !text.equals("");
 			}).collect(Collectors.toList());
 
-			
-			//separate keywords
-			
+			// separate keywords
 			Line.forEach(line -> {
-				// System.err.println(word.text());
+				// splite by space
 				for (String s : line.text().split("[ \\t\\n\\x0B\\f\\r\\u00a0]")) {
+					// if s is not space only
 					if (!s.trim().replaceAll("[\\t\\n\\x0B\\f\\r\\d|\\|]", "").equals("")) {
-
-						// if (containsHanScript(s)) {
-						// Character lastChar = null;
-						// List<Character> notChinese = new ArrayList<Character>();
-						// char[] charArray = s.toCharArray();
-						// for (int i = 0; i < charArray.length; i++) {
-						// if (!isChineseChar(charArray[i])) {
-						// if (lastChar != null && isChineseChar(lastChar)) {
-						// notChinese = new ArrayList<Character>();
-						// }
-						// notChinese.add(charArray[i]);
-						// } else {
-						// System.out.println("[" + atomicInteger.incrementAndGet() + "]: " +
-						// charArray[i]);
-						// }
-						// // 大@ins
-						// // 大@ins大
-						// if (isChineseChar(charArray[i]) && lastChar != null &&
-						// !isChineseChar(lastChar)
-						// || !isChineseChar(charArray[i]) && i == charArray.length - 1) {
-						// System.err.println("[" + atomicInteger.incrementAndGet() + "]: " + notChinese
-						// .stream().map(e -> e.toString()).reduce((acc, e) -> acc + e).get());
-						// }
-						// lastChar = charArray[i];
-						// }
-						//
-						// } else {
-						// System.err.println(
-						// "[" + atomicInteger.incrementAndGet() + "]: " + s + " C?: " +
-						// containsHanScript(s));
-						// }
-
+						// If contain Chinese/other character, split dividual character
+						if (containsHanScript(s)) {
+							Character lastChar = null;
+							List<Character> notChinese = new ArrayList<Character>();
+							char[] charArray = s.toCharArray();
+							for (int i = 0; i < charArray.length; i++) {
+								// If contain not Chinese Character, store in notChinese
+								if (!isChineseChar(charArray[i])) {
+									// if Last Character is chinese, create new list
+									if (isChineseChar(lastChar)) {
+										notChinese = new ArrayList<Character>();
+									}
+									// Store notChinese char
+									notChinese.add(charArray[i]);
+								} else {
+									// Is chinese, directly print out
+									System.out.println("*[" + atomicInteger.incrementAndGet() + "]: " + charArray[i]);
+								}
+								// if (大@ins{大} || 大@in{s}) print combined notChinese List<Charater> to String
+								// this char = chinese && last char != chinese
+								// or
+								// this char != chinese && is last of the char array
+								if (isChineseChar(charArray[i]) && lastChar != null && !isChineseChar(lastChar)
+										|| !isChineseChar(charArray[i]) && i == charArray.length - 1) {
+									System.err.println("[" + atomicInteger.incrementAndGet() + "]: " + notChinese
+											.stream().map(e -> e.toString()).reduce((acc, e) -> acc + e).get());
+								}
+								lastChar = charArray[i];
+							}
+						} else {
+							// Not Contain Chinese, print directly
+							System.err.println(
+									"[" + atomicInteger.incrementAndGet() + "]: " + s + " C?: " + containsHanScript(s));
+						}
 					}
 				}
 			});
 
 			// Get URLs
-			Elements Links = doc.select("[href]");
+			Elements Links = doc.select("a");
+			// logger.info("[<a>]: " + Links);
 			Links.stream().filter(l -> {
 				return !l.absUrl("href").isEmpty();
 			}).forEach(link -> {
 				addToUnProcessedURL(link.absUrl("href"));
-				// System.err.println(link.absUrl("href"));
+				// logger.info("{}\t=>\t{}", link, link.absUrl("href"));
 			});
 			// logger.info("[Parsedurl]: " + url.toString());
 
-			System.err.println("[" + ProcessedURL.size() + "] ProcessedURL: " + ProcessedURL);
-			System.err.println("[" + UnprocessedURL.size() + "] UnprocessedURL: " + UnprocessedURL);
+			// System.err.println("[" + URLQueue.getProcessedURLSize() + "] ProcessedURL: "
+			// + URLQueue.getProcessedURL());
+			// System.err.println(
+			// "[" + URLQueue.getUnprocessedURLSize() + "] UnprocessedURL: " +
+			// URLQueue.getUnprocessedURL());
 
+		} catch (UnsupportedMimeTypeException ex) {
+			logger.debug(ex.getLocalizedMessage() + "\t{}", ParsingURL.toString());
+			System.out.println("Remove Errorn URL: " + ProcessedURL.remove(ParsingURL.toString()));
 		} catch (IOException e) {
 			e.printStackTrace();
+			logger.debug(e.getLocalizedMessage() + "\t{}", ParsingURL.toString());
+			System.out.println("Remove Errorn URL: " + ProcessedURL.remove(ParsingURL.toString()));
 		}
 	}
 

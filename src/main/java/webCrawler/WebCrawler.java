@@ -10,6 +10,10 @@ import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.slf4j.LoggerFactory;
 
 public class WebCrawler {
 
@@ -21,33 +25,58 @@ public class WebCrawler {
 		WebCrawler w = new WebCrawler();
 		// w.fetch("http://www.hkbu.edu.hk/eng/main/index.jsp", "./fetched.html");
 		// w.fetch("http://www.hkbu.edu.hk/tch/main/index.jsp", "./fetchedCH.html");
-
+		w.initialization();
 		w.run();
 	}
 
+	private final org.slf4j.Logger logger = LoggerFactory.getLogger(WebCrawler.class);
 	private final String initialURL = "http://www.hkbu.edu.hk/tch/main/index.jsp";
 	private static int ProcessedSite = 0;
 
+	public void initialization() {
+		URLQueue.PushUnProcessedURL(initialURL);
+	}
+
+	List<Thread> ParserThreadList = new ArrayList<Thread>();
+
 	public void run() {
 		try {
-			Thread ParserThread = null;
-			// if (URLQueue.getProcessedURLSize() < 1) {
-			while (URLQueue.getProcessedURLSize() < 10) {
-				URLQueue.PushUnProcessedURL(initialURL);
-				System.out.println("=> ProcessedURLSize(): " + URLQueue.getProcessedURLSize());
-				if (URLQueue.getUnprocessedURLSize() > 0) {
-					String pu = URLQueue.PollUnProcessedURL();
-					System.out.println("parse Unprocessed: " + initialURL);
-					ParserThread = new Thread(new HtmlParser(new URL(pu)));
-					ParserThread.start();
+			while (URLQueue.getProcessedURLSize() < 100) {
+				while (URLQueue.getProcessedURLSize() < 100) {
+					// System.out.println("=> ProcessedURLSize: " + URLQueue.getProcessedURLSize());
+					if (URLQueue.getUnprocessedURLSize() > 0) {
+						String pu = URLQueue.PollUnProcessedURL();
+						System.out.println("Start parse URL: " + pu);
+						Thread ParserThread = new Thread(new HtmlParser(new URL(pu)));
+						ParserThreadList.add(ParserThread);
+						ParserThread.start();
+						ProcessedSite++;
+					}
+					// try {
+					// ParserThread.join();
+					// } catch (InterruptedException e) {
+					// e.printStackTrace();
+					// }
 				}
-				// try {
-				// ParserThread.join();
-				// } catch (InterruptedException e) {
-				// e.printStackTrace();
-				// }
-				ProcessedSite++;
+
+				try {
+					for (Thread t : ParserThreadList)
+						t.join();
+				} catch (InterruptedException e) {
+					logger.debug(e.getLocalizedMessage());
+					e.printStackTrace();
+				}
+
 			}
+
+			// System.err.println("[" + URLQueue.getProcessedURLSize() + "] ProcessedURL: "
+			// + URLQueue.getProcessedURL());
+			// System.err.println(
+			// "[" + URLQueue.getUnprocessedURLSize() + "] UnprocessedURL: " +
+			// URLQueue.getUnprocessedURL());
+			logger.debug("Final visited url: " + ProcessedSite);
+			logger.debug("[" + URLQueue.getProcessedURLSize() + "] ProcessedURL: " + URLQueue.getProcessedURL());
+			logger.debug("[" + URLQueue.getUnprocessedURLSize() + "] UnprocessedURL: " + URLQueue.getUnprocessedURL());
 
 		} catch (MalformedURLException e) {
 			e.printStackTrace();
@@ -55,6 +84,7 @@ public class WebCrawler {
 
 	}
 
+	// fetch url to file
 	public void fetch(String _url, String fileName) {
 		URL url;
 		System.err.println("Try to fetch from : " + _url);
