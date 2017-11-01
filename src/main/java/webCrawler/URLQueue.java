@@ -18,7 +18,7 @@ public class URLQueue {
 	public synchronized static boolean ProcessedURLisContain(String url) {
 		return ProcessedURL.contains(url);
 	}
-
+ 
 	public synchronized static boolean UnprocessedURLisContain(String url) {
 		return UnprocessedURL.contains(url);
 	}

@@ -79,6 +79,7 @@ public class HtmlParser implements Runnable {
 			}).collect(Collectors.toList());
 
 			// separate keywords
+
 			Line.forEach(line -> {
 				// splite by space
 				for (String s : line.text().split("[ \\t\\n\\x0B\\f\\r\\u00a0]")) {
