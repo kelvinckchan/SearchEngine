@@ -25,12 +25,7 @@ public class HtmlParser implements Runnable {
 	// private URLQueue URLQueue;
 	private PriorityQueue<String> ProcessedURL = URLQueue.getProcessedURL();
 	private PriorityQueue<String> UnprocessedURL = URLQueue.getUnprocessedURL();;
-
 	private final org.slf4j.Logger logger;
-
-	// public static void main(String[] args) {
-	//
-	// }
 
 	public HtmlParser(URL ParsingURL) {
 		this.ParsingURL = ParsingURL;
@@ -79,7 +74,6 @@ public class HtmlParser implements Runnable {
 			}).collect(Collectors.toList());
 
 			// separate keywords
-
 			Line.forEach(line -> {
 				// splite by space
 				for (String s : line.text().split("[ \\t\\n\\x0B\\f\\r\\u00a0]")) {
@@ -94,14 +88,15 @@ public class HtmlParser implements Runnable {
 								// If contain not Chinese Character, store in notChinese
 								if (!isChineseChar(charArray[i])) {
 									// if Last Character is chinese, create new list
-									if (isChineseChar(lastChar)) {
+									if (lastChar != null && isChineseChar(lastChar)) {
 										notChinese = new ArrayList<Character>();
 									}
 									// Store notChinese char
 									notChinese.add(charArray[i]);
 								} else {
 									// Is chinese, directly print out
-									System.out.println("*[" + atomicInteger.incrementAndGet() + "]: " + charArray[i]);
+									// System.out.println("*[" + atomicInteger.incrementAndGet() + "]: " +
+									// charArray[i]);
 								}
 								// if (大@ins{大} || 大@in{s}) print combined notChinese List<Charater> to String
 								// this char = chinese && last char != chinese
@@ -109,15 +104,16 @@ public class HtmlParser implements Runnable {
 								// this char != chinese && is last of the char array
 								if (isChineseChar(charArray[i]) && lastChar != null && !isChineseChar(lastChar)
 										|| !isChineseChar(charArray[i]) && i == charArray.length - 1) {
-									System.err.println("[" + atomicInteger.incrementAndGet() + "]: " + notChinese
-											.stream().map(e -> e.toString()).reduce((acc, e) -> acc + e).get());
+									// System.err.println("[" + atomicInteger.incrementAndGet() + "]: " + notChinese
+									// .stream().map(e -> e.toString()).reduce((acc, e) -> acc + e).get());
 								}
 								lastChar = charArray[i];
 							}
 						} else {
 							// Not Contain Chinese, print directly
-							System.err.println(
-									"[" + atomicInteger.incrementAndGet() + "]: " + s + " C?: " + containsHanScript(s));
+							// System.err.println(
+							// "[" + atomicInteger.incrementAndGet() + "]: " + s + " C?: " +
+							// containsHanScript(s));
 						}
 					}
 				}

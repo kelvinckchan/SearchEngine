@@ -6,7 +6,6 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.StringWriter;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
@@ -32,7 +31,8 @@ public class WebCrawler {
 	private final org.slf4j.Logger logger = LoggerFactory.getLogger(WebCrawler.class);
 	private final String initialURL = "http://www.hkbu.edu.hk/tch/main/index.jsp";
 	private static int ProcessedSite = 0;
-
+	private final int ProcessURLPoolSize =100;
+	
 	public void initialization() {
 		URLQueue.PushUnProcessedURL(initialURL);
 	}
@@ -41,8 +41,8 @@ public class WebCrawler {
 
 	public void run() {
 		try {
-			while (URLQueue.getProcessedURLSize() < 100) {
-				while (URLQueue.getProcessedURLSize() < 100) {
+			while (URLQueue.getProcessedURLSize() < ProcessURLPoolSize) {
+				while (URLQueue.getProcessedURLSize() < ProcessURLPoolSize) {
 					// System.out.println("=> ProcessedURLSize: " + URLQueue.getProcessedURLSize());
 					if (URLQueue.getUnprocessedURLSize() > 0) {
 						String pu = URLQueue.PollUnProcessedURL();
