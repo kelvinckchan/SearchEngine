@@ -24,7 +24,8 @@ public class HtmlParser implements Runnable {
 	private URL ParsingURL;
 	// private URLQueue URLQueue;
 	private PriorityQueue<String> ProcessedURL = URLQueue.getProcessedURL();
-	private PriorityQueue<String> UnprocessedURL = URLQueue.getUnprocessedURL();;
+	private PriorityQueue<String> UnprocessedURL = URLQueue.getUnprocessedURL();
+	DataStore ds;
 	private final org.slf4j.Logger logger;
 
 	public HtmlParser(URL ParsingURL) {
@@ -50,13 +51,14 @@ public class HtmlParser implements Runnable {
 	@Override
 	public void run() {
 		Parser(ParsingURL);
+		
 	}
 
 	public void Parser(URL url) {
 		try {
 			Document doc = Jsoup.parse(url, 50000);
 			// System.out.println(doc);
-
+			ds = new DataStore();
 			// Get title
 			Elements WebTitles = doc.select("title");
 			for (Element t : WebTitles) {
@@ -69,10 +71,9 @@ public class HtmlParser implements Runnable {
 			AtomicInteger atomicInteger = new AtomicInteger(0);
 
 			List<Element> Line = aTagWordsString.stream().filter(line -> {
-				String text = line.text().replaceAll("[\\t\\n\\x0B\\f\\r\\d|\\|]", "");
+				String text = line.text().replaceAll("[ \\t\\n\\x0B\\f\\r\\d|\\|]", "");
 				return !text.equals("");
 			}).collect(Collectors.toList());
-
 			// separate keywords
 			Line.forEach(line -> {
 				// splite by space
@@ -95,8 +96,9 @@ public class HtmlParser implements Runnable {
 									notChinese.add(charArray[i]);
 								} else {
 									// Is chinese, directly print out
-									// System.out.println("*[" + atomicInteger.incrementAndGet() + "]: " +
-									// charArray[i]);
+//									 System.out.println("*[" + atomicInteger.incrementAndGet() + "]: " +
+//									 charArray[i]);
+									StoreKeywordRow(String.valueOf(charArray[i]), atomicInteger.incrementAndGet());
 								}
 								// if (大@ins{大} || 大@in{s}) print combined notChinese List<Charater> to String
 								// this char = chinese && last char != chinese
@@ -106,6 +108,9 @@ public class HtmlParser implements Runnable {
 										|| !isChineseChar(charArray[i]) && i == charArray.length - 1) {
 									// System.err.println("[" + atomicInteger.incrementAndGet() + "]: " + notChinese
 									// .stream().map(e -> e.toString()).reduce((acc, e) -> acc + e).get());
+									String keyword = notChinese.stream().map(e -> e.toString())
+											.reduce((acc, e) -> acc + e).get();
+									StoreKeywordRow(keyword, atomicInteger.incrementAndGet());
 								}
 								lastChar = charArray[i];
 							}
@@ -114,6 +119,7 @@ public class HtmlParser implements Runnable {
 							// System.err.println(
 							// "[" + atomicInteger.incrementAndGet() + "]: " + s + " C?: " +
 							// containsHanScript(s));
+							StoreKeywordRow(s, atomicInteger.incrementAndGet());
 						}
 					}
 				}
@@ -135,6 +141,7 @@ public class HtmlParser implements Runnable {
 			// System.err.println(
 			// "[" + URLQueue.getUnprocessedURLSize() + "] UnprocessedURL: " +
 			// URLQueue.getUnprocessedURL());
+			ds.Store();
 
 		} catch (UnsupportedMimeTypeException ex) {
 			logger.debug(ex.getLocalizedMessage() + "\t{}", ParsingURL.toString());
@@ -144,6 +151,10 @@ public class HtmlParser implements Runnable {
 			logger.debug(e.getLocalizedMessage() + "\t{}", ParsingURL.toString());
 			System.out.println("Remove Errorn URL: " + ProcessedURL.remove(ParsingURL.toString()));
 		}
+	}
+
+	public void StoreKeywordRow(String key, int WordPos) {
+		ds.addRow(key, 1, WordPos, ParsingURL.toString());
 	}
 
 	HashSet<UnicodeBlock> chineseUnicodeBlocks = new HashSet<UnicodeBlock>() {

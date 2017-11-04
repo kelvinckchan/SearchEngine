@@ -17,12 +17,13 @@ public class testUnicode {
 		AtomicInteger atomicInteger = new AtomicInteger(0);
 		// System.err.println(word.text());
 
-		String line = "浸大@Instagram哈哈, 傻的嗎!(12/10)Nice!";
-
+		String line = "浸大@Instagram哈哈どうも, 傻的嗎!(12/10)Nice!";
+System.out.println(line.replaceAll("[\\w+]", ""));
+		
 		// splite by space
 		for (String s : line.split("[ \\t\\n\\x0B\\f\\r\\u00a0]")) {
 			// if s is not space only
-			if (!s.trim().replaceAll("[\\t\\n\\x0B\\f\\r\\d|\\|]", "").equals("")) {
+			if (!s.trim().replaceAll("[  \\t\\n\\x0B\\f\\r\\d|\\|]", "").equals("")) {
 
 				// If contain Chinese/other character, split dividual character
 				if (containsHanScript(s)) {

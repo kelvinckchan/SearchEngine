@@ -31,8 +31,8 @@ public class WebCrawler {
 	private final org.slf4j.Logger logger = LoggerFactory.getLogger(WebCrawler.class);
 	private final String initialURL = "http://www.hkbu.edu.hk/tch/main/index.jsp";
 	private static int ProcessedSite = 0;
-	private final int ProcessURLPoolSize =100;
-	
+	private final int ProcessURLPoolSize = 100;
+
 	public void initialization() {
 		URLQueue.PushUnProcessedURL(initialURL);
 	}
@@ -41,24 +41,25 @@ public class WebCrawler {
 
 	public void run() {
 		try {
+			Thread ParserThread = null;
 			while (URLQueue.getProcessedURLSize() < ProcessURLPoolSize) {
 				while (URLQueue.getProcessedURLSize() < ProcessURLPoolSize) {
 					// System.out.println("=> ProcessedURLSize: " + URLQueue.getProcessedURLSize());
 					if (URLQueue.getUnprocessedURLSize() > 0) {
 						String pu = URLQueue.PollUnProcessedURL();
 						System.out.println("Start parse URL: " + pu);
-						Thread ParserThread = new Thread(new HtmlParser(new URL(pu)));
+						  ParserThread = new Thread(new HtmlParser(new URL(pu)));
 						ParserThreadList.add(ParserThread);
 						ParserThread.start();
 						ProcessedSite++;
 					}
-					// try {
-					// ParserThread.join();
-					// } catch (InterruptedException e) {
-					// e.printStackTrace();
-					// }
+//					 try {
+//					 ParserThread.join();
+//					 } catch (InterruptedException e) {
+//					 e.printStackTrace();
+//					 }
+					
 				}
-
 				try {
 					for (Thread t : ParserThreadList)
 						t.join();
@@ -66,9 +67,11 @@ public class WebCrawler {
 					logger.debug(e.getLocalizedMessage());
 					e.printStackTrace();
 				}
+				
 
 			}
 
+			DataStore.print();
 			// System.err.println("[" + URLQueue.getProcessedURLSize() + "] ProcessedURL: "
 			// + URLQueue.getProcessedURL());
 			// System.err.println(
