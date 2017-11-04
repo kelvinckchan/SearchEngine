@@ -18,11 +18,11 @@ public class testUnicode {
 	public void run() {
 		AtomicInteger atomicInteger = new AtomicInteger(0);
 
-		String line = "浸大@Instagram哈哈どうも, 傻的嗎!(12/10)Nice!";
+		String line = "浸大@Instagram哈哈\"どうも, \", 傻的嗎!(12/10)<gg>Nice!http://www.google.com";
 		// line = "I am , a boy!";
 		System.out.println(line);
 
-		for (String s : line.replaceAll("[\\pP+0-9]", "").split("[ \\t\\n\\x0B\\f\\r\\d|\\|]")) {
+		for (String s : line.split("[ \"\"<>\\pP+0-9\\t\\n\\x0B\\f\\r\\d|\\|]")) {
 			// if s is not space only
 			if (!s.trim().replaceAll("[ \\t\\n\\x0B\\f\\r\\d|\\|]", "").equals("")) {
 				// If contain Chinese/other character, split dividual character
