@@ -10,10 +10,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class testUnicode {
 
-	public static void main(String[] args) {
-		testUnicode t = new testUnicode();
-		t.run();
-	}
+//	public static void main(String[] args) {
+//		testUnicode t = new testUnicode();
+//		t.run();
+//	}
 
 	public void run() {
 		AtomicInteger atomicInteger = new AtomicInteger(0);

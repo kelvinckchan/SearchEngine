@@ -7,6 +7,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
@@ -45,9 +46,11 @@ public class HtmlParser implements Runnable {
 		URLQueue.PushProcessedURL(url);
 	}
 
-	public void addToUnProcessedURL(String url) {
-		if (!URLQueue.ProcessedURLisContain(url) && !URLQueue.UnprocessedURLisContain(url))
-			URLQueue.PushUnProcessedURL(url);
+	public void addToUnProcessedURL(ArrayList<String> linksList) {
+		linksList.forEach(l -> {
+			if (!URLQueue.ProcessedURLisContain(l) && !URLQueue.UnprocessedURLisContain(l))
+				URLQueue.PushUnProcessedURL(l);
+		});
 	}
 
 	@Override
@@ -80,14 +83,11 @@ public class HtmlParser implements Runnable {
 			// Get URLs
 			Elements Links = doc.select("a");
 			// logger.info("[<a>]: " + Links);
-			Links.stream().filter(l -> {
-				return !l.absUrl("href").isEmpty();
-			}).forEach(link -> {
-				addToUnProcessedURL(link.absUrl("href"));
-				// logger.info("{}\t=>\t{}", link, link.absUrl("href"));
-			});
-
-			ds.Store();
+			ArrayList<String> LinksList = Links.stream().filter(l -> !l.absUrl("href").isEmpty())
+					.map(l -> l.absUrl("href")).collect(Collectors.toCollection(ArrayList::new));
+			addToUnProcessedURL(LinksList);
+			
+			ds.Store(ParsingURL.toString(), LinksList);
 
 		} catch (UnsupportedMimeTypeException ex) {
 			logger.debug(ex.getLocalizedMessage() + "\t{}", ParsingURL.toString());

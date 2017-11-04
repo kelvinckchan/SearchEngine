@@ -1,5 +1,6 @@
 package webCrawler;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -16,13 +17,14 @@ public class DataStore {
 	Map<Integer, Row> TempRowMap;
 	int ExistedRowSize;
 	private final static org.slf4j.Logger logger = LoggerFactory.getLogger(DataStore.class);
+	static Map<String, ArrayList<String>> ContainedURLMap = new HashMap<String, ArrayList<String>>();;
 
 	public DataStore() {
 		ExistedRowSize = RowMap.size();
 		TempRowMap = new HashMap<Integer, Row>();
 	}
 
-	public synchronized void Store() {
+	public synchronized void Store(String ParsingURL, ArrayList<String> ContainedURLList) {
 		RowMap.putAll(TempRowMap);
 		TempRowMap.forEach((k, v) -> {
 			int rowid = RowMap.size() + 1;
@@ -30,6 +32,7 @@ public class DataStore {
 			RowMap.put(rowid, r);
 			StoreToCol(r);
 		});
+		ContainedURLMap.put(ParsingURL, ContainedURLList);
 
 	}
 
@@ -41,8 +44,9 @@ public class DataStore {
 			logger.debug("Rowid - {}: {keyword:{}, WordPos:{}, URL:{}}", k, v.Keyword, v.WordNo, v.FromURL);
 		});
 
-		logger.debug("Reuslt: " + RowMap.get(1).Keyword + " " + RowMap.get(1).FromURL);
-
+		ContainedURLMap.forEach((k, v) -> {
+			logger.debug("ContainedURLMap: \"{}\" => Contained({}): {}", k,v.size(), v);
+		});
 	}
 
 	public synchronized void addRow(String Keyword, int Rank, int WordNo, String FromURL) {

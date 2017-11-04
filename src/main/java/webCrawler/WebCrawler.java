@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.slf4j.LoggerFactory;
 
+
 public class WebCrawler {
 
 	public WebCrawler() {
@@ -24,16 +25,20 @@ public class WebCrawler {
 		WebCrawler w = new WebCrawler();
 		// w.fetch("http://www.hkbu.edu.hk/eng/main/index.jsp", "./fetched.html");
 		// w.fetch("http://www.hkbu.edu.hk/tch/main/index.jsp", "./fetchedCH.html");
-		w.initialization();
+		try {
+			w.initialization();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
 		w.run();
 	}
 
 	private final org.slf4j.Logger logger = LoggerFactory.getLogger(WebCrawler.class);
 	private final String initialURL = "http://www.hkbu.edu.hk/tch/main/index.jsp";
 	private static int ProcessedSite = 0;
-	private final int ProcessURLPoolSize = 100;
+	private final int ProcessURLPoolSize = 2;
 
-	public void initialization() {
+	public void initialization() throws MalformedURLException {
 		URLQueue.PushUnProcessedURL(initialURL);
 	}
 
@@ -48,17 +53,17 @@ public class WebCrawler {
 					if (URLQueue.getUnprocessedURLSize() > 0) {
 						String pu = URLQueue.PollUnProcessedURL();
 						System.out.println("Start parse URL: " + pu);
-						  ParserThread = new Thread(new HtmlParser(new URL(pu)));
+						ParserThread = new Thread(new HtmlParser(new URL(pu)));
 						ParserThreadList.add(ParserThread);
 						ParserThread.start();
 						ProcessedSite++;
 					}
-//					 try {
-//					 ParserThread.join();
-//					 } catch (InterruptedException e) {
-//					 e.printStackTrace();
-//					 }
-					
+					// try {
+					// ParserThread.join();
+					// } catch (InterruptedException e) {
+					// e.printStackTrace();
+					// }
+
 				}
 				try {
 					for (Thread t : ParserThreadList)
@@ -67,7 +72,6 @@ public class WebCrawler {
 					logger.debug(e.getLocalizedMessage());
 					e.printStackTrace();
 				}
-				
 
 			}
 

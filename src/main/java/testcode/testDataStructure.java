@@ -39,11 +39,11 @@ import com.google.common.primitives.Ints;
 
 public class testDataStructure {
 
-	public static void main(String[] args) {
-		testDataStructure app = new testDataStructure();
-
-		app.run();
-	}
+//	public static void main(String[] args) {
+//		testDataStructure app = new testDataStructure();
+//
+//		app.run();
+//	}
 
 	ArrayListMultimap<Object, ArrayList<Object>> RowMap = ArrayListMultimap.create();
 

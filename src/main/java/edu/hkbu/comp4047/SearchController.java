@@ -18,12 +18,10 @@ public class SearchController {
 		model.addAttribute("query", keywords);
 		return "result";
 	}
+	
 	public String SearchForKeyword(String keyword) {
-		
-		
 		
 		return "result";
 	} 
-	
 	
 }
