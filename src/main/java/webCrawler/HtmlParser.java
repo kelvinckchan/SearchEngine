@@ -28,7 +28,6 @@ public class HtmlParser implements Runnable {
 
 	private URL ParsingURL;
 	private String TitleText;
-	// private URLQueue URLQueue;
 	private PriorityQueue<String> ProcessedURL = URLQueue.getProcessedURL();
 	private PriorityQueue<String> UnprocessedURL = URLQueue.getUnprocessedURL();
 	DataStore ds;
@@ -41,11 +40,6 @@ public class HtmlParser implements Runnable {
 		this.logger = LoggerFactory.getLogger(HtmlParser.class);
 		addToProcessedURL(this.ParsingURL.toString());
 	}
-
-	// public HtmlParser(URL ParsingURL, URLQueue URLQueue) {
-	// this.ParsingURL = ParsingURL;
-	// // this.URLQueue = URLQueue;
-	// }
 
 	public void addToProcessedURL(String url) {
 		URLQueue.PushProcessedURL(url);
@@ -110,60 +104,46 @@ public class HtmlParser implements Runnable {
 		ds.addRow(key, 1, WordPos, ParsingURL.toString(), TitleText);
 	}
 
-	public void KeywordsSeparator(List<Element> Line) {
-		AtomicInteger atomicInteger = new AtomicInteger(0);
-		// separate keywords
-		Line.forEach(line -> {
-			// splite by space
-
-			for (String s : line.text().replaceAll("&nbsp", "")
-					.split("[ \u00a0<>\\pP+0-9\"\"\\t\\x0B\\f\\r\\d|\\|\\s+]")) {
+	// separate keywords
+	public void KeywordsSeparator(List<Element> Lines) {
+		AtomicInteger counter = new AtomicInteger(0);
+		String regex = "[ \u00a0<>\\pP+0-9\"\"\\t\\x0B\\f\\r\\d|\\|\\s+]";
+		Lines.forEach(line -> {
+			// splite by space and special characters
+			for (String s : line.text().replaceAll("&nbsp", "").split(regex)) {
 				// if s is not space only
-				if (!s.trim().replaceAll("[ \u00a0<>\\pP+0-9\"\"\\t\\x0B\\f\\r\\d|\\|\\s+]", "").equals("")
-						&& !s.isEmpty()) {
+				if (!s.trim().replaceAll(regex, "").equals("") && !s.isEmpty()) {
 					// If contain Chinese/other character, split dividual character
-					if (containsTargetScript(s)) {
+					if (ContainsTargetScript(s)) {
 						Character lastChar = null;
-						List<Character> notChinese = new ArrayList<Character>();
+						String NonChineseString = "";
 						char[] charArray = s.toCharArray();
 						for (int i = 0; i < charArray.length; i++) {
 							// If contain not Chinese Character, store in notChinese
 							if (!containsTargetScript(charArray[i])) {
 								// if Last Character is chinese, clear list
-								if (containsTargetScript(lastChar)) {
-									notChinese.clear();
-								}
+								if (containsTargetScript(lastChar))
+									NonChineseString = "";
 								// Store notChinese char
-								notChinese.add(charArray[i]);
+								NonChineseString += charArray[i];
 								// if(大@in{s}) this char != chinese && is last of the char array
 								if (i == charArray.length - 1) {
-									// System.err.println("[" + atomicInteger.incrementAndGet() + "]: " + notChinese
-									// .stream().map(e -> e.toString()).reduce((acc, e) -> acc + e).get());
-									String keyword = notChinese.stream().map(c -> c.toString()).reduce((a, b) -> a + b)
-											.get();
-									StoreKeywordRow(keyword, atomicInteger.incrementAndGet());
+									StoreKeywordRow(NonChineseString, counter.incrementAndGet());
 								}
 							} else {
 								// if (大@ins{大}) this char == chinese && not Fist Char && last char != chinese
 								if (lastChar != null && !containsTargetScript(lastChar)) {
-									// System.err.println("[" + atomicInteger.incrementAndGet() + "]: " + notChinese
-									// .stream().map(e -> e.toString()).reduce((acc, e) -> acc + e).get());
-									String keyword = notChinese.stream().map(e -> e.toString())
-											.reduce((acc, e) -> acc + e).get();
-									StoreKeywordRow(keyword, atomicInteger.incrementAndGet());
+									StoreKeywordRow(NonChineseString, counter.incrementAndGet());
 								} else {
 									// Is chinese, directly print out
-									// System.out.println("[" + atomicInteger.incrementAndGet() + "]: " +
-									// charArray[i]);
-									StoreKeywordRow(String.valueOf(charArray[i]), atomicInteger.incrementAndGet());
+									StoreKeywordRow(String.valueOf(charArray[i]), counter.incrementAndGet());
 								}
 							}
 							lastChar = charArray[i];
 						}
 					} else {
 						// Not Contain Chinese, print directly
-						// System.err.println("[" + atomicInteger.incrementAndGet() + "]: " + s);
-						StoreKeywordRow(s, atomicInteger.incrementAndGet());
+						StoreKeywordRow(s, counter.incrementAndGet());
 					}
 				}
 			}
@@ -173,10 +153,10 @@ public class HtmlParser implements Runnable {
 	List<UnicodeScript> TargetScript = Arrays.asList(Character.UnicodeScript.HAN, Character.UnicodeScript.HIRAGANA);
 
 	public boolean containsTargetScript(Character c) {
-		return containsTargetScript(String.valueOf(c));
+		return ContainsTargetScript(String.valueOf(c));
 	}
 
-	public boolean containsTargetScript(String s) {
+	public boolean ContainsTargetScript(String s) {
 		return s.codePoints().anyMatch(codepoint -> TargetScript.contains(Character.UnicodeScript.of(codepoint)));
 	}
 

@@ -75,7 +75,7 @@ public class WebCrawler {
 
 			}
 
-			DataStore.print();
+//			DataStore.print();
 			// System.err.println("[" + URLQueue.getProcessedURLSize() + "] ProcessedURL: "
 			// + URLQueue.getProcessedURL());
 			// System.err.println(

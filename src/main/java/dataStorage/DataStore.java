@@ -1,5 +1,6 @@
 package dataStorage;
 
+import java.lang.Character.UnicodeScript;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -39,19 +40,18 @@ public class DataStore {
 	}
 
 	public static void print() {
-//
-//		RowMap.forEach((k, v) -> {
-//			System.out.printf("Rid(k)-%s: {keyword:\"%s\", URL:\"%s\"}\n", k, v.Keyword, v.FromURL);
-//			logger.debug("Rowid - {}: {keyword:{}, WordPos:{}, URL:{}}", k, v.Keyword, v.WordNo, v.FromURL);
-//		});
-//
-//		ContainedURLMap.forEach((k, v) -> {
-//			logger.debug("ContainedURLMap: \"{}\" => Contained({}): {}", k, v.size(), v);
-//		});
+		RowMap.forEach((k, v) -> {
+			System.out.printf("Rid(k)-%s: {keyword:\"%s\", URL:\"%s\"}\n", k, v.Keyword, v.FromURL);
+			logger.debug("Rowid - {}: {keyword:{}, WordPos:{}, URL:{}}", k, v.Keyword, v.WordNo, v.FromURL);
+		});
+
+		ContainedURLMap.forEach((k, v) -> {
+			logger.debug("ContainedURLMap: \"{}\" => Contained({}): {}", k, v.size(), v);
+		});
 	}
 
-	public synchronized void addRow(String Keyword, int Rank, int WordNo, String FromURL,String Title) {
-		TempRowMap.put(TempRowMap.size() + 1, new Row(TempRowMap.size() + 1, Keyword, WordNo, FromURL,Title));
+	public synchronized void addRow(String Keyword, int Rank, int WordNo, String FromURL, String Title) {
+		TempRowMap.put(TempRowMap.size() + 1, new Row(TempRowMap.size() + 1, Keyword, WordNo, FromURL, Title));
 	}
 
 	public void StoreToCol(Row r) {
@@ -78,30 +78,78 @@ public class DataStore {
 
 	public static List<Row> SearchByKeywordResult(String keyword) {
 		List<Row> result = new ArrayList<Row>();
-		SearchByKeyword(keyword).stream().forEach(row->{
-			if(result.stream().noneMatch(r-> Objects.equals(r.FromURL, row.FromURL)))
-			result.add(row);
+		SearchByKeyword(keyword).stream().forEach(row -> {
+			if (result.stream().noneMatch(r -> Objects.equals(r.FromURL, row.FromURL)))
+				result.add(row);
 		});
 		return result;
 	}
+
 	public static List<Row> SearchByPhrasedResult(String keyword) {
 		List<Row> result = new ArrayList<Row>();
-		SearchByPhrase(keyword).stream().forEach(row->{
-			if(result.stream().noneMatch(r-> Objects.equals(r.FromURL, row.FromURL)))
-			result.add(row);
+		SearchByPhrase(keyword).stream().forEach(row -> {
+			if (result.stream().noneMatch(r -> Objects.equals(r.FromURL, row.FromURL)))
+				result.add(row);
 		});
 		return result;
 	}
+
 	public static List<Row> SearchByKeyword(String keyword) {
 		Map<Integer, String> map = keycol.ColObj;
 		return map.entrySet().stream().filter(entry -> Objects.equals(entry.getValue(), keyword))
 				.map(entry -> RowMap.get(entry.getKey())).collect(Collectors.toList());
 	}
 
+	static List<UnicodeScript> TargetScript = Arrays.asList(Character.UnicodeScript.HAN,
+			Character.UnicodeScript.HIRAGANA);
+
+	public static boolean containsTargetScript(Character c) {
+		return ContainsTargetScript(String.valueOf(c));
+	}
+
+	public static boolean ContainsTargetScript(String s) {
+		return s.codePoints().anyMatch(codepoint -> TargetScript.contains(Character.UnicodeScript.of(codepoint)));
+	}
+
+	public static List<String> PhraseSplitor(String phrase) {
+		List<String> keywords = new ArrayList<String>();
+		String regex = "[ \u00a0<>\\pP+0-9\"\"\\t\\x0B\\f\\r\\d|\\|\\s+]";
+		for (String s : phrase.replaceAll("&nbsp", "").split("\\s+")) {
+			if (!s.trim().replaceAll(regex, "").equals("") &&!s.contains(regex)&& !s.isEmpty()) {
+				if (ContainsTargetScript(s)) {
+					Character lastChar = null;
+					String NonChineseString = "";
+					char[] charArray = s.toCharArray();
+					for (int i = 0; i < charArray.length; i++) {
+						if (!containsTargetScript(charArray[i])) {
+							if (containsTargetScript(lastChar))
+								NonChineseString = "";
+							NonChineseString += charArray[i];
+							if (i == charArray.length - 1) {
+								keywords.add(NonChineseString);
+							}
+						} else {
+							if (lastChar != null && !containsTargetScript(lastChar)) {
+								keywords.add(NonChineseString);
+							} else {
+								keywords.add(String.valueOf(charArray[i]));
+							}
+						}
+						lastChar = charArray[i];
+					}
+				} else {
+					keywords.add(s);
+				}
+			}
+		}
+		return keywords;
+
+	}
+
 	public static List<Row> SearchByPhrase(String phrase) {
 		List<Row> Last = new ArrayList<Row>();
 		List<Row> Common = new ArrayList<Row>();
-		for (String s : phrase.split("\\s+")) {
+		for (String s : PhraseSplitor(phrase)) {
 			List<Row> Rows = SearchByKeyword(s);
 			if (!Last.isEmpty()) {
 				for (Row r : Rows) {
@@ -120,7 +168,6 @@ public class DataStore {
 		return Common;
 	}
 }
-
 
 class KeywordCol extends Col {
 	public KeywordCol() {

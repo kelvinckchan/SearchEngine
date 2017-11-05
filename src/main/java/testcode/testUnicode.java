@@ -24,7 +24,7 @@ public class testUnicode {
 //		Stream.of(line.split("")).forEach(System.out::println);
 		System.out.println(line);
 
-		for (String s : line.split("[ \\pP+0-9\"\"<>\\t\\n\\x0B\\f\\r\\d|\\|]")) {
+		for (String s : line.split("[ <>\\pP+0-9\"\"\\t\\n\\x0B\\f\\r\\d|\\|]")) {
 			// if s is not space only
 			if (!s.trim().replaceAll("[ \\pP+0-9\\t\\n\\x0B\\f\\r\\d|\\|]", "").equals("")) {
 				// If contain Chinese/other character, split dividual character
@@ -48,7 +48,7 @@ public class testUnicode {
 						} else {
 							// if (大@ins{大}) this char == chinese && not Fist Char && last char != chinese
 							if (lastChar != null && !containsTargetScript(lastChar)) {
-								System.err.println("[" + atomicInteger.incrementAndGet() + "]: "
+								System.out.println("[" + atomicInteger.incrementAndGet() + "]: "
 										+ notChinese.stream().map(e -> e.toString()).reduce((acc, e) -> acc + e).get());
 							}
 							// Is chinese, directly print out
