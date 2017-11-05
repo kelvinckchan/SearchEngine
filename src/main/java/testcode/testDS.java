@@ -19,10 +19,10 @@ import java.util.stream.Stream;
 
 public class testDS {
 
-	public static void main(String[] args) {
-		testDS app = new testDS();
-		app.run();
-	}
+//	public static void main(String[] args) {
+//		testDS app = new testDS();
+//		app.run();
+//	}
 
 	KeywordCol keycol = new KeywordCol();
 	RankCol rankcol = new RankCol();

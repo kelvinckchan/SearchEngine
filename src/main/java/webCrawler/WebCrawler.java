@@ -14,23 +14,18 @@ import java.util.List;
 
 import org.slf4j.LoggerFactory;
 
-import dataStorage.DataStore;
-
 public class WebCrawler {
 
-	public WebCrawler() {
 
-	}
-
-	public static void main(String[] args) {
-		WebCrawler w = new WebCrawler();
-		try {
-			w.initialization();
-		} catch (MalformedURLException e) {
-			e.printStackTrace();
-		}
-		w.run();
-	}
+//	public static void main(String[] args) {
+//		WebCrawler w = new WebCrawler();
+//		try {
+//			w.initialization();
+//		} catch (MalformedURLException e) {
+//			e.printStackTrace();
+//		}
+//		w.run();
+//	}
 
 	private final org.slf4j.Logger logger = LoggerFactory.getLogger(WebCrawler.class);
 	private final String initialURL = "http://www.hkbu.edu.hk/tch/main/index.jsp";
