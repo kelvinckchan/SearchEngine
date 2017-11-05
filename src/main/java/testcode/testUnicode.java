@@ -10,10 +10,10 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class testUnicode {
 
-//	public static void main(String[] args) {
-//		testUnicode t = new testUnicode();
-//		t.run();
-//	}
+	public static void main(String[] args) {
+		testUnicode t = new testUnicode();
+		t.run();
+	}
 
 	public void run() {
 		AtomicInteger atomicInteger = new AtomicInteger(0);
@@ -22,9 +22,9 @@ public class testUnicode {
 		// line = "I am , a boy!";
 		System.out.println(line);
 
-		for (String s : line.split("[ \"\"<>\\pP+0-9\\t\\n\\x0B\\f\\r\\d|\\|]")) {
+		for (String s : line.split("[ \\pP+0-9\"\"<>\\t\\n\\x0B\\f\\r\\d|\\|]")) {
 			// if s is not space only
-			if (!s.trim().replaceAll("[ \\t\\n\\x0B\\f\\r\\d|\\|]", "").equals("")) {
+			if (!s.trim().replaceAll("[ \\pP+0-9\\t\\n\\x0B\\f\\r\\d|\\|]", "").equals("")) {
 				// If contain Chinese/other character, split dividual character
 				if (containsTargetScript(s)) {
 					Character lastChar = null;

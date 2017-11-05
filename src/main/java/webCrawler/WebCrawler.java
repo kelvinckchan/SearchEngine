@@ -36,7 +36,7 @@ public class WebCrawler {
 	private final org.slf4j.Logger logger = LoggerFactory.getLogger(WebCrawler.class);
 	private final String initialURL = "http://www.hkbu.edu.hk/tch/main/index.jsp";
 	private static int ProcessedSite = 0;
-	private final int ProcessURLPoolSize = 2;
+	private final int ProcessURLPoolSize = 100;
 
 	public void initialization() throws MalformedURLException {
 		URLQueue.PushUnProcessedURL(initialURL);

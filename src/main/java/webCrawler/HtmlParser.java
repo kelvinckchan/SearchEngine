@@ -108,9 +108,10 @@ public class HtmlParser implements Runnable {
 		// separate keywords
 		Line.forEach(line -> {
 			// splite by space
-			for (String s : line.text().split("[ \"\"<>\\pP+0-9\\t\\x0B\\f\\r\\d|\\|]")) {
+			
+			for (String s : line.text().replaceAll("&nbsp","").split("[ \u00a0<>\\pP+0-9\"\"\\t\\x0B\\f\\r\\d|\\|]")) {
 				// if s is not space only
-				if (!s.trim().replaceAll("[ \\t\\x0B\\f\\r\\d|\\|]", "").equals("")) {
+				if (!s.trim().replaceAll("[ \u00a0\\t\\x0B\\f\\r\\d|\\|]", "").equals("")) {
 					// If contain Chinese/other character, split dividual character
 					if (containsTargetScript(s)) {
 						Character lastChar = null;

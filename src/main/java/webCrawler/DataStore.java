@@ -33,7 +33,6 @@ public class DataStore {
 			StoreToCol(r);
 		});
 		ContainedURLMap.put(ParsingURL, ContainedURLList);
-
 	}
 
 	public static void print() {
@@ -45,14 +44,12 @@ public class DataStore {
 		});
 
 		ContainedURLMap.forEach((k, v) -> {
-			logger.debug("ContainedURLMap: \"{}\" => Contained({}): {}", k,v.size(), v);
+			logger.debug("ContainedURLMap: \"{}\" => Contained({}): {}", k, v.size(), v);
 		});
 	}
 
 	public synchronized void addRow(String Keyword, int Rank, int WordNo, String FromURL) {
-
-		TempRowMap.put(TempRowMap.size() + 1,
-				new Row(TempRowMap.size() + 1, Keyword, Rank, WordNo, FromURL, Arrays.asList("hkbu.com")));
+		TempRowMap.put(TempRowMap.size() + 1, new Row(TempRowMap.size() + 1, Keyword, Rank, WordNo, FromURL));
 	}
 
 	public void StoreToCol(Row r) {
@@ -68,17 +65,15 @@ class Row {
 	public int Rank;
 	public int WordNo;
 	public String FromURL;
-	public List<String> ContainedURL;
 	// public ArrayList<Object> RowContent;
 
-	public Row(int RowId, String Keyword, int Rank, int WordNo, String FromURL, List<String> ContainedURL) {
+	public Row(int RowId, String Keyword, int Rank, int WordNo, String FromURL) {
 		// RowContent = new ArrayList<Object>();
 		this.RowId = RowId;
 		this.Keyword = Keyword;
 		this.Rank = Rank;
 		this.WordNo = WordNo;
 		this.FromURL = FromURL;
-		this.ContainedURL = ContainedURL;
 	}
 
 	public Row setRowId(int RowId) {
