@@ -7,6 +7,7 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 public class testUnicode {
 
@@ -19,7 +20,8 @@ public class testUnicode {
 		AtomicInteger atomicInteger = new AtomicInteger(0);
 
 		String line = "浸大@Instagram哈哈\"どうも, \", 傻的嗎!(12/10)<gg>Nice!http://www.google.com";
-		// line = "I am , a boy!";
+//		 line = "I am , a boy!";
+//		Stream.of(line.split("")).forEach(System.out::println);
 		System.out.println(line);
 
 		for (String s : line.split("[ \\pP+0-9\"\"<>\\t\\n\\x0B\\f\\r\\d|\\|]")) {

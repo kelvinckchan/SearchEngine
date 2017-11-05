@@ -5,10 +5,19 @@
 <title>Search Result</title>
 </head>
 <body>
-	<h1>Search query: <span th:text="${query}"></span></h1>
-	<div th:each="url,iterStat : ${URLs}">
-		<a th:text="${iterStat.index +1}"> </a> 
-		<a th:href="${url}" th:text="${url}"></a>
+	<h1>
+		Search query: <span th:text="${query}"></span>
+	</h1>
+
+	<div th:each="row,iterStat : ${Rows}">
+		<tr>
+			<td><a th:text="${iterStat.index +1}"> </a></td>
+			<td><a th:href="${row.FromURL}" th:text="${row.Title}"></a></td>
+		</tr>
+		<tr>
+			<a th:href="${row.FromURL}" th:text="${row.FromURL}"></a>
+		</tr>
 	</div>
+
 </body>
 </html>

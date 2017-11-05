@@ -22,17 +22,22 @@ import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.slf4j.LoggerFactory;
 
+import dataStorage.DataStore;
+
 public class HtmlParser implements Runnable {
 
 	private URL ParsingURL;
+	private String TitleText;
 	// private URLQueue URLQueue;
 	private PriorityQueue<String> ProcessedURL = URLQueue.getProcessedURL();
 	private PriorityQueue<String> UnprocessedURL = URLQueue.getUnprocessedURL();
 	DataStore ds;
+	private int MaxUnprocessedQueueSize;
 	private final org.slf4j.Logger logger;
 
-	public HtmlParser(URL ParsingURL) {
+	public HtmlParser(URL ParsingURL, int MaxUnprocessedQueueSize) {
 		this.ParsingURL = ParsingURL;
+		this.MaxUnprocessedQueueSize = MaxUnprocessedQueueSize;
 		this.logger = LoggerFactory.getLogger(HtmlParser.class);
 		addToProcessedURL(this.ParsingURL.toString());
 	}
@@ -47,10 +52,12 @@ public class HtmlParser implements Runnable {
 	}
 
 	public void addToUnProcessedURL(ArrayList<String> linksList) {
-		linksList.forEach(l -> {
-			if (!URLQueue.ProcessedURLisContain(l) && !URLQueue.UnprocessedURLisContain(l))
+		for (String l : linksList) {
+			if (UnprocessedURL.size() >= MaxUnprocessedQueueSize) {
+				break;
+			} else if (!URLQueue.ProcessedURLisContain(l) && !URLQueue.UnprocessedURLisContain(l))
 				URLQueue.PushUnProcessedURL(l);
-		});
+		}
 	}
 
 	@Override
@@ -68,7 +75,7 @@ public class HtmlParser implements Runnable {
 			// Get title
 			Elements WebTitles = doc.select("title");
 			for (Element t : WebTitles) {
-				String TitleText = t.text();
+				TitleText = t.text();
 				// System.err.println(TitleText);
 			}
 
@@ -86,7 +93,7 @@ public class HtmlParser implements Runnable {
 			ArrayList<String> LinksList = Links.stream().filter(l -> !l.absUrl("href").isEmpty())
 					.map(l -> l.absUrl("href")).collect(Collectors.toCollection(ArrayList::new));
 			addToUnProcessedURL(LinksList);
-			
+
 			ds.Store(ParsingURL.toString(), LinksList);
 
 		} catch (UnsupportedMimeTypeException ex) {
@@ -100,7 +107,7 @@ public class HtmlParser implements Runnable {
 	}
 
 	public void StoreKeywordRow(String key, int WordPos) {
-		ds.addRow(key, 1, WordPos, ParsingURL.toString());
+		ds.addRow(key, 1, WordPos, ParsingURL.toString(), TitleText);
 	}
 
 	public void KeywordsSeparator(List<Element> Line) {
@@ -108,10 +115,12 @@ public class HtmlParser implements Runnable {
 		// separate keywords
 		Line.forEach(line -> {
 			// splite by space
-			
-			for (String s : line.text().replaceAll("&nbsp","").split("[ \u00a0<>\\pP+0-9\"\"\\t\\x0B\\f\\r\\d|\\|]")) {
+
+			for (String s : line.text().replaceAll("&nbsp", "")
+					.split("[ \u00a0<>\\pP+0-9\"\"\\t\\x0B\\f\\r\\d|\\|\\s+]")) {
 				// if s is not space only
-				if (!s.trim().replaceAll("[ \u00a0\\t\\x0B\\f\\r\\d|\\|]", "").equals("")) {
+				if (!s.trim().replaceAll("[ \u00a0<>\\pP+0-9\"\"\\t\\x0B\\f\\r\\d|\\|\\s+]", "").equals("")
+						&& !s.isEmpty()) {
 					// If contain Chinese/other character, split dividual character
 					if (containsTargetScript(s)) {
 						Character lastChar = null;
