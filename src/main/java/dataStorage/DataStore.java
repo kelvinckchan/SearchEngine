@@ -15,7 +15,7 @@ import org.slf4j.LoggerFactory;
 public class DataStore {
 
 	static KeywordCol keycol = new KeywordCol();
-	static RankCol rankcol = new RankCol();
+	// static RankCol rankcol = new RankCol();
 	static WordNoCol wordnocol = new WordNoCol();
 	static Map<Integer, Row> RowMap = new HashMap<Integer, Row>();
 	Map<Integer, Row> TempRowMap;
@@ -41,8 +41,9 @@ public class DataStore {
 
 	public static void print() {
 		RowMap.forEach((k, v) -> {
-			System.out.printf("Rid(k)-%s: {keyword:\"%s\", URL:\"%s\"}\n", k, v.Keyword, v.FromURL);
-			logger.debug("Rowid - {}: {keyword:{}, WordPos:{}, URL:{}}", k, v.Keyword, v.WordNo, v.FromURL);
+			System.out.printf("Rid(k)-%s: {keyword:\"%s\", URL:\"%s\"}\n", k, v.getKeyword(), v.getFromURL());
+			logger.debug("Rowid - {}: {keyword:{}, WordPos:{}, URL:{}}", k, v.getKeyword(), v.getWordNo(),
+					v.getFromURL());
 		});
 
 		ContainedURLMap.forEach((k, v) -> {
@@ -55,9 +56,9 @@ public class DataStore {
 	}
 
 	public void StoreToCol(Row r) {
-		keycol.addColObj(r.RowId, r.Keyword);
-		// rankcol.addColObj(r.RowId, r.Rank);
-		wordnocol.addColObj(r.RowId, r.WordNo);
+		keycol.addColObj(r.getRowId(), r.getKeyword());
+		// rankcol.addColObj(r.getRowId(), r.Rank);
+		wordnocol.addColObj(r.getRowId(), r.getWordNo());
 	}
 
 	public static synchronized Map<Integer, Row> getRowMap() {
@@ -68,9 +69,9 @@ public class DataStore {
 		return keycol;
 	}
 
-	public static synchronized Col getrankcol() {
-		return rankcol;
-	}
+	// public static synchronized Col getrankcol() {
+	// return rankcol;
+	// }
 
 	public static synchronized Col getwordnocol() {
 		return wordnocol;
@@ -79,7 +80,7 @@ public class DataStore {
 	public static List<Row> SearchByKeywordResult(String keyword) {
 		List<Row> result = new ArrayList<Row>();
 		SearchByKeyword(keyword).stream().forEach(row -> {
-			if (result.stream().noneMatch(r -> Objects.equals(r.FromURL, row.FromURL)))
+			if (result.stream().noneMatch(r -> Objects.equals(r.getFromURL(), row.getFromURL())))
 				result.add(row);
 		});
 		return result;
@@ -88,7 +89,7 @@ public class DataStore {
 	public static List<Row> SearchByPhrasedResult(String keyword) {
 		List<Row> result = new ArrayList<Row>();
 		SearchByPhrase(keyword).stream().forEach(row -> {
-			if (result.stream().noneMatch(r -> Objects.equals(r.FromURL, row.FromURL)))
+			if (result.stream().noneMatch(r -> Objects.equals(r.getFromURL(), row.getFromURL())))
 				result.add(row);
 		});
 		return result;
@@ -115,7 +116,7 @@ public class DataStore {
 		List<String> keywords = new ArrayList<String>();
 		String regex = "[ \u00a0<>\\pP+0-9\"\"\\t\\x0B\\f\\r\\d|\\|\\s+]";
 		for (String s : phrase.replaceAll("&nbsp", "").split("\\s+")) {
-			if (!s.trim().replaceAll(regex, "").equals("") &&!s.contains(regex)&& !s.isEmpty()) {
+			if (!s.trim().replaceAll(regex, "").equals("") && !s.contains(regex) && !s.isEmpty()) {
 				if (ContainsTargetScript(s)) {
 					Character lastChar = null;
 					String NonChineseString = "";
@@ -154,10 +155,11 @@ public class DataStore {
 			if (!Last.isEmpty()) {
 				for (Row r : Rows) {
 					if (Last.stream()
-							.anyMatch(lastrow -> Objects.equals(lastrow.FromURL, r.FromURL)
-									&& Objects.equals(lastrow.FromURL, r.FromURL)
-									&& Objects.equals(lastrow.WordNo, r.WordNo - 1))
-							&& !Common.stream().anyMatch(commonrow -> Objects.equals(commonrow.FromURL, r.FromURL))) {
+							.anyMatch(lastrow -> Objects.equals(lastrow.getFromURL(), r.getFromURL())
+									&& Objects.equals(lastrow.getFromURL(), r.getFromURL())
+									&& Objects.equals(lastrow.getWordNo(), r.getWordNo() - 1))
+							&& !Common.stream()
+									.anyMatch(commonrow -> Objects.equals(commonrow.getFromURL(), r.getFromURL()))) {
 						Common.add(r);
 					}
 				}
@@ -175,11 +177,11 @@ class KeywordCol extends Col {
 	}
 }
 
-class RankCol extends Col {
-	public RankCol() {
-		ColObj = new HashMap<Integer, Integer>();
-	}
-}
+// class RankCol extends Col {
+// public RankCol() {
+// ColObj = new HashMap<Integer, Integer>();
+// }
+// }
 
 class WordNoCol extends Col {
 	public WordNoCol() {

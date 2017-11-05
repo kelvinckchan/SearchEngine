@@ -70,7 +70,6 @@ public class HtmlParser implements Runnable {
 			Elements WebTitles = doc.select("title");
 			for (Element t : WebTitles) {
 				TitleText = t.text();
-				// System.err.println(TitleText);
 			}
 
 			// Get words
@@ -78,12 +77,10 @@ public class HtmlParser implements Runnable {
 			List<Element> Line = aTagWordsString.stream()
 					.filter(line -> !line.text().replaceAll("[ \\t\\n\\x0B\\f\\r\\d|\\|]", "").equals(""))
 					.collect(Collectors.toList());
-
 			KeywordsSeparator(Line);
 
 			// Get URLs
 			Elements Links = doc.select("a");
-			// logger.info("[<a>]: " + Links);
 			ArrayList<String> LinksList = Links.stream().filter(l -> !l.absUrl("href").isEmpty())
 					.map(l -> l.absUrl("href")).collect(Collectors.toCollection(ArrayList::new));
 			addToUnProcessedURL(LinksList);
@@ -92,11 +89,11 @@ public class HtmlParser implements Runnable {
 
 		} catch (UnsupportedMimeTypeException ex) {
 			logger.debug(ex.getLocalizedMessage() + "\t{}", ParsingURL.toString());
-			System.out.println("Remove Errorn URL: " + ProcessedURL.remove(ParsingURL.toString()));
+			System.err.println("Remove Errorn URL: " + ProcessedURL.remove(ParsingURL.toString()));
 		} catch (IOException e) {
 			e.printStackTrace();
 			logger.debug(e.getLocalizedMessage() + "\t{}", ParsingURL.toString());
-			System.out.println("Remove Errorn URL: " + ProcessedURL.remove(ParsingURL.toString()));
+			System.err.println("Remove Errorn URL: " + ProcessedURL.remove(ParsingURL.toString()));
 		}
 	}
 
