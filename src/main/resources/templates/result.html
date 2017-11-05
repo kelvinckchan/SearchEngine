@@ -8,16 +8,54 @@
 	<h1>
 		Search query: <span th:text="${query}"></span>
 	</h1>
-
-	<div th:each="row,iterStat : ${Rows}">
+	<table>
 		<tr>
-			<td><a th:text="${iterStat.index +1}"> </a></td>
-			<td><a th:href="${row.FromURL}" th:text="${row.Title}"></a></td>
+			<th>Number</th>
+			<th>Title</th>
+			<th>URL</th>
 		</tr>
-		<tr>
-			<a th:href="${row.FromURL}" th:text="${row.FromURL}"></a>
-		</tr>
-	</div>
-
+		<div th:each="row,iterStat : ${Rows}">
+			<tr>
+				<td><a th:text="${iterStat.index +1}"> </a></td>
+				<td><a th:href="${row.FromURL}" th:text="${row.Title}"></a></td>
+				<td><a th:href="${row.FromURL}" th:text="${row.FromURL}"></a></td>
+			</tr>
+		</div>
+	</table>
 </body>
-</html> 
+<style>
+table {
+	font-family: arial, sans-serif;
+	border-collapse: collapse;
+	width: 100%;
+}
+
+td, th {
+	border: 1px solid #dddddd;
+	text-align: left;
+	padding: 8px;
+}
+
+tr:nth-child(even) {
+	background-color: #dddddd;
+}
+
+ul.pagination {
+	display: inline-block;
+	padding: 0;
+	margin: 0;
+}
+
+ul.pagination li {
+	display: inline;
+}
+
+ul.pagination li a {
+	color: black;
+	float: left;
+	padding: 8px 16px;
+	text-decoration: none;
+}
+</style>
+</html>
+

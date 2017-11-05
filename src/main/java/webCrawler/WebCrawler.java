@@ -44,8 +44,11 @@ public class WebCrawler {
 				}
 			}
 
-			DataStore.print();
-
+			// DataStore.print();
+			DataStore.output();
+			
+			
+			
 			logger.debug("Final visited url: " + ProcessedSite);
 			logger.debug("[" + URLQueue.getProcessedURLSize() + "] ProcessedURL: " + URLQueue.getProcessedURL());
 			logger.debug("[" + URLQueue.getUnprocessedURLSize() + "] UnprocessedURL: " + URLQueue.getUnprocessedURL());
@@ -56,14 +59,14 @@ public class WebCrawler {
 
 	}
 
-	// public static void main(String[] args) {
-	// WebCrawler w = new WebCrawler();
-	// try {
-	// w.initialization();
-	// } catch (MalformedURLException e) {
-	// e.printStackTrace();
-	// }
-	// w.run();
-	// }
+	public static void main(String[] args) {
+		WebCrawler w = new WebCrawler();
+		try {
+			w.initialization();
+		} catch (MalformedURLException e) {
+			e.printStackTrace();
+		}
+		w.run();
+	}
 
 }

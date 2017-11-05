@@ -1,5 +1,15 @@
 package dataStorage;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.OutputStream;
+import java.io.OutputStreamWriter;
+import java.io.StringReader;
 import java.lang.Character.UnicodeScript;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +21,13 @@ import java.util.Map.Entry;
 import java.util.stream.Collectors;
 
 import org.slf4j.LoggerFactory;
+
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
+import com.google.gson.stream.JsonReader;
+import com.thoughtworks.xstream.XStream;
 
 public class DataStore {
 
@@ -29,12 +46,11 @@ public class DataStore {
 	}
 
 	public synchronized void Store(String ParsingURL, ArrayList<String> ContainedURLList) {
-		RowMap.putAll(TempRowMap);
 		TempRowMap.forEach((k, v) -> {
 			int rowid = RowMap.size() + 1;
-			Row r = v.setRowId(rowid);
-			RowMap.put(rowid, r);
-			StoreToCol(r);
+			v.setRowId(rowid);
+			RowMap.put(rowid, v);
+			StoreToCol(v);
 		});
 		ContainedURLMap.put(ParsingURL, ContainedURLList);
 	}
@@ -51,11 +67,89 @@ public class DataStore {
 		});
 	}
 
+	public static void output() {
+		try {
+			Gson gson = new GsonBuilder().enableComplexMapKeySerialization().setPrettyPrinting().create();
+			RowList list = new RowList();
+			RowMap.forEach((k, v) -> {
+				list.add(v);
+			});
+			OutputStream outputStream = null;
+			outputStream = new FileOutputStream(new File(".\\output.json"));
+			BufferedWriter bufferedWriter;
+			bufferedWriter = new BufferedWriter(new OutputStreamWriter(outputStream, "UTF-8"));
+
+			gson.toJson(list, RowList.class, bufferedWriter);
+			bufferedWriter.close();
+
+		} catch (JsonIOException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		// try {
+		// XStream xstream = new XStream();
+		// xstream.alias("dataStorage.Row", RowList.class);
+		// xstream.alias("dataStorage.RowList", RowList.class);
+		// xstream.addImplicitCollection(RowList.class, "list");
+		// RowList list = new RowList();
+		// RowMap.forEach((k, v) -> {
+		// list.add(v);
+		// });
+		// xstream.toXML(list, new FileWriter(".\\output.xml"));
+		// } catch (IOException e) {
+		// e.printStackTrace();
+		// }
+
+	}
+
+	public static void input() {
+		Gson gson = new Gson();
+		try {
+			JsonReader reader = new JsonReader(new FileReader(".\\output.json"));
+			reader.setLenient(true);
+			RowList rList = gson.fromJson(reader, RowList.class);
+			System.out.println("Start Reading");
+			rList.getRowList().forEach(r -> {
+				int rowid = RowMap.size() + 1;
+				r.setRowId(rowid);
+				RowMap.put(rowid, r);
+				StoreToCol(r);
+				System.out.println("store: "+rowid);
+			});
+			System.out.println("Reading Finished.");
+		} catch (JsonSyntaxException e) {
+			e.printStackTrace();
+		} catch (JsonIOException e) {
+			e.printStackTrace();
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		}
+
+		//
+		//
+		// XStream xstream = new XStream();
+		// Class<?>[] classes = new Class[] { dataStorage.Row.class,
+		// dataStorage.RowList.class };
+		// xstream.allowTypes(classes);
+		// File xml = new File(".\\output.xml");
+		// System.err.println("try");
+		// RowList rList = (RowList) xstream.fromXML(xml);
+		// System.err.println(xml);
+		// rList.getRowList().forEach(r -> {
+		// int rowid = RowMap.size() + 1;
+		// r.setRowId(rowid);
+		// RowMap.put(rowid, r);
+		// StoreToCol(r);
+		// });
+
+	}
+
 	public synchronized void addRow(String Keyword, int Rank, int WordNo, String FromURL, String Title) {
 		TempRowMap.put(TempRowMap.size() + 1, new Row(TempRowMap.size() + 1, Keyword, WordNo, FromURL, Title));
 	}
 
-	public void StoreToCol(Row r) {
+	public static void StoreToCol(Row r) {
 		keycol.addColObj(r.getRowId(), r.getKeyword());
 		// rankcol.addColObj(r.getRowId(), r.Rank);
 		wordnocol.addColObj(r.getRowId(), r.getWordNo());
