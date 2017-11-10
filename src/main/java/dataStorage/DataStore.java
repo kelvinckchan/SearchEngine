@@ -45,6 +45,10 @@ public class DataStore {
 		TempRowMap = new HashMap<Integer, Row>();
 	}
 
+	public synchronized static Map<String, ArrayList<String>> getContainedURLMap() {
+		return ContainedURLMap;
+	}
+
 	public synchronized void Store(String ParsingURL, ArrayList<String> ContainedURLList) {
 		TempRowMap.forEach((k, v) -> {
 			int rowid = RowMap.size() + 1;
@@ -55,9 +59,10 @@ public class DataStore {
 		ContainedURLMap.put(ParsingURL, ContainedURLList);
 	}
 
-	public static void print() {
+	public synchronized static void print() {
 		RowMap.forEach((k, v) -> {
-			System.out.printf("Rid(k)-%s: {keyword:\"%s\", URL:\"%s\"}\n", k, v.getKeyword(), v.getFromURL());
+			// System.out.printf("Rid(k)-%s: {keyword:\"%s\", URL:\"%s\"}\n", k,
+			// v.getKeyword(), v.getFromURL());
 			logger.debug("Rowid - {}: {keyword:{}, WordPos:{}, URL:{}}", k, v.getKeyword(), v.getWordNo(),
 					v.getFromURL());
 		});
@@ -87,20 +92,6 @@ public class DataStore {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
-		// try {
-		// XStream xstream = new XStream();
-		// xstream.alias("dataStorage.Row", RowList.class);
-		// xstream.alias("dataStorage.RowList", RowList.class);
-		// xstream.addImplicitCollection(RowList.class, "list");
-		// RowList list = new RowList();
-		// RowMap.forEach((k, v) -> {
-		// list.add(v);
-		// });
-		// xstream.toXML(list, new FileWriter(".\\output.xml"));
-		// } catch (IOException e) {
-		// e.printStackTrace();
-		// }
-
 	}
 
 	public static void input() {
@@ -115,7 +106,7 @@ public class DataStore {
 				r.setRowId(rowid);
 				RowMap.put(rowid, r);
 				StoreToCol(r);
-				System.out.println("store: "+rowid);
+				System.out.println("store: " + rowid);
 			});
 			System.out.println("Reading Finished.");
 		} catch (JsonSyntaxException e) {
@@ -125,23 +116,6 @@ public class DataStore {
 		} catch (FileNotFoundException e) {
 			e.printStackTrace();
 		}
-
-		//
-		//
-		// XStream xstream = new XStream();
-		// Class<?>[] classes = new Class[] { dataStorage.Row.class,
-		// dataStorage.RowList.class };
-		// xstream.allowTypes(classes);
-		// File xml = new File(".\\output.xml");
-		// System.err.println("try");
-		// RowList rList = (RowList) xstream.fromXML(xml);
-		// System.err.println(xml);
-		// rList.getRowList().forEach(r -> {
-		// int rowid = RowMap.size() + 1;
-		// r.setRowId(rowid);
-		// RowMap.put(rowid, r);
-		// StoreToCol(r);
-		// });
 
 	}
 
@@ -173,10 +147,12 @@ public class DataStore {
 
 	public static List<Row> SearchByKeywordResult(String keyword) {
 		List<Row> result = new ArrayList<Row>();
-		SearchByKeyword(keyword).stream().forEach(row -> {
-			if (result.stream().noneMatch(r -> Objects.equals(r.getFromURL(), row.getFromURL())))
-				result.add(row);
-		});
+		for (String s : PhraseSplitor(keyword)) {
+			SearchByKeyword(s).stream().forEach(row -> {
+				if (result.stream().noneMatch(r -> Objects.equals(r.getFromURL(), row.getFromURL())))
+					result.add(row);
+			});
+		}
 		return result;
 	}
 
@@ -196,7 +172,9 @@ public class DataStore {
 	}
 
 	static List<UnicodeScript> TargetScript = Arrays.asList(Character.UnicodeScript.HAN,
-			Character.UnicodeScript.HIRAGANA);
+			Character.UnicodeScript.TAI_VIET, Character.UnicodeScript.BOPOMOFO, Character.UnicodeScript.HIRAGANA,
+			Character.UnicodeScript.HANGUL, Character.UnicodeScript.KATAKANA, Character.UnicodeScript.YI,
+			Character.UnicodeScript.COMMON, Character.UnicodeScript.MIAO, Character.UnicodeScript.LISU);
 
 	public static boolean containsTargetScript(Character c) {
 		return ContainsTargetScript(String.valueOf(c));
@@ -244,22 +222,39 @@ public class DataStore {
 	public static List<Row> SearchByPhrase(String phrase) {
 		List<Row> Last = new ArrayList<Row>();
 		List<Row> Common = new ArrayList<Row>();
-		for (String s : PhraseSplitor(phrase)) {
+		boolean match = false;
+		List<String> splited = PhraseSplitor(phrase);
+		if (splited.size() == 1)
+			return SearchByKeyword(phrase);
+
+		for (String s : splited) {
+			logger.debug("Searching phrase: {}", s);
 			List<Row> Rows = SearchByKeyword(s);
+			match = false;
 			if (!Last.isEmpty()) {
 				for (Row r : Rows) {
-					if (Last.stream()
-							.anyMatch(lastrow -> Objects.equals(lastrow.getFromURL(), r.getFromURL())
-									&& Objects.equals(lastrow.getFromURL(), r.getFromURL())
-									&& Objects.equals(lastrow.getWordNo(), r.getWordNo() - 1))
-							&& !Common.stream()
-									.anyMatch(commonrow -> Objects.equals(commonrow.getFromURL(), r.getFromURL()))) {
-						Common.add(r);
+					if (Last.stream().anyMatch(lastrow -> Objects.equals(lastrow.getFromURL(), r.getFromURL())
+							&& Objects.equals(lastrow.getWordNo(), r.getWordNo() - 1))) {
+						if (Common.stream()
+								.noneMatch(commonrow -> Objects.equals(commonrow.getFromURL(), r.getFromURL())))
+							Common.add(r);
+						match = true;
+					} else {
+						if (Common.stream()
+								.anyMatch(commonrow -> Objects.equals(commonrow.getFromURL(), r.getFromURL()))) {
+							Common = Common.stream().filter(cr -> !Objects.equals(cr.getFromURL(), r.getFromURL()))
+									.collect(Collectors.toList());
+							match = false;
+						}
 					}
 				}
+				logger.debug("Searching phrase? match: {}", match);
+				// if (!match)
+				// return new ArrayList<Row>();
 				Rows = Common;
 			}
 			Last = Rows;
+
 		}
 		return Common;
 	}
