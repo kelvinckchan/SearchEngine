@@ -41,8 +41,8 @@ public class WebCrawler {
 		this.debug = debug;
 		this.exportData = exportData;
 		URLQueue.PushUnProcessedURLQueue(InitialURL);
-		System.out.printf("[Initialization]- {X:%s, Y:%s, InitialURL:%s, debug:%s, export:%s}\n", MaxUnprocessedQueueSize,
-				MaxProcessedURLPoolSize, InitialURL, debug, exportData);
+		System.out.printf("[Initialization]- {X:%s, Y:%s, InitialURL:%s, debug:%s, export:%s}\n",
+				MaxUnprocessedQueueSize, MaxProcessedURLPoolSize, InitialURL, debug, exportData);
 
 	}
 
@@ -51,7 +51,9 @@ public class WebCrawler {
 
 	public void run() {
 		try {
-			ExecutorService executor = Executors.newFixedThreadPool(8);
+			int ThreadPoolSize = Runtime.getRuntime().availableProcessors()*2;
+			System.out.print("try with " + ThreadPoolSize  + " ThreadPoolSize.");
+			ExecutorService executor = Executors.newFixedThreadPool(ThreadPoolSize);
 			Collection<Future<ArrayList<String>>> tasks = new LinkedList<Future<ArrayList<String>>>();
 			Future<ArrayList<String>> future;
 			while (URLQueue.getProcessedURLQueueSize() < MaxProcessedURLPoolSize) {
@@ -63,6 +65,7 @@ public class WebCrawler {
 					future = executor
 							.submit(new HtmlParser(new URL(pu), MaxProcessedURLPoolSize, MaxUnprocessedQueueSize));
 					tasks.add(future);
+					add();
 					ProcessedSite++;
 				}
 
@@ -71,7 +74,7 @@ public class WebCrawler {
 				for (Future<?> currTask : tasks) {
 					try {
 						ArrayList<String> List = (ArrayList<String>) currTask.get();
-						System.out.println(tasks.size() + "Get: " + List);
+						// System.out.println(tasks.size() + "Get: " + List);
 						if (List != null && WaitingQueue.size() < MaxProcessedURLPoolSize) {
 							addToWaitingQueue(List);
 						}
@@ -81,12 +84,14 @@ public class WebCrawler {
 				}
 				tasks.clear();
 				add();
-
-				System.out.println("[" + WaitingQueue.size() + "] WaitingQueue: " + WaitingQueue);
-				System.out.println("[" + URLQueue.getProcessedURLQueueSize() + "] ProcessedURL: "
-						+ URLQueue.getProcessedURLQueue());
-				System.out.println("[" + URLQueue.getUnprocessedURLQueueSize() + "] UnprocessedURL: "
-						+ URLQueue.getUnprocessedURLQueue());
+				// System.out.println("[" + WaitingQueue.size() + "] WaitingQueue: " +
+				// WaitingQueue);
+				// System.out.println("[" + URLQueue.getProcessedURLQueueSize() + "]
+				// ProcessedURL: "
+				// + URLQueue.getProcessedURLQueue());
+				// System.out.println("[" + URLQueue.getUnprocessedURLQueueSize() + "]
+				// UnprocessedURL: "
+				// + URLQueue.getUnprocessedURLQueue());
 				if (WaitingQueue.size() == 0 && URLQueue.getUnprocessedURLQueueSize() == 0) {
 					break;
 				}
@@ -104,7 +109,7 @@ public class WebCrawler {
 				DataStore.output();
 			if (debug)
 				debug();
-
+			check();
 			executor.shutdown();
 			// System.exit(0);
 		} catch (MalformedURLException e) {
@@ -115,7 +120,6 @@ public class WebCrawler {
 
 	public void debug() {
 		DataStore.print();
-		check();
 	}
 
 	public void check() {
@@ -154,7 +158,8 @@ public class WebCrawler {
 			String url = WaitingQueue.poll();
 			if (!URLQueue.getErrorURL().contains(url)) {
 				URLQueue.PushUnProcessedURLQueue(url);
-				System.out.println(URLQueue.getUnprocessedURLQueueSize() + "+++add to unpro: " + url);
+				// System.out.println(URLQueue.getUnprocessedURLQueueSize() + "+++add to unpro:
+				// " + url);
 			}
 		}
 		System.out.println("added");
